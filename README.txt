@@ -1,0 +1,1 @@
+This is a program able to receive emails periodically and automatically process or foward it.
