@@ -21,11 +21,15 @@ namespace EmailMessage
         private String _last_uid = "0";
         private FileInfo _log_file = new FileInfo("Log.txt");
         private FileInfo _last_uid_file = new FileInfo("Last_uid.txt");
+        private string _folder_name = "MailDone";
 
         public Form1()
         {
             InitializeComponent();
             logToFile("program start!!");
+             //FileInfo file = new FileInfo(_folder_name + "/" + "657" + ".txt");
+             //if (isFindContent(file.OpenText())) MessageBox.Show("true!!");
+             //else MessageBox.Show("false!!");
         }
 
         const int RETRY_MAX_COUNT = 3;
@@ -90,6 +94,11 @@ namespace EmailMessage
             this.Text = "Hello " + account;
             this._account = account;
             this._password = password;
+
+            string activeDir = Directory.GetCurrentDirectory();
+            string newPath = System.IO.Path.Combine(activeDir, _folder_name);
+            if (!System.IO.Directory.Exists(newPath))
+                System.IO.Directory.CreateDirectory(newPath);
         }
 
         void write_last_uid_file(String s)
@@ -181,7 +190,6 @@ namespace EmailMessage
         }
         String parseHeader(StreamReader sr)
         {
-
             String targetHeader = "X-Ntu-Recipient: ";
             int targetHeaderLength = targetHeader.Length;
             while (!sr.EndOfStream)
@@ -197,6 +205,27 @@ namespace EmailMessage
             return "";
         }
 
+        bool isFindContent(StreamReader sr)
+        {
+            String targetHeader = "=C2=E5=BE=C7";
+            int targetHeaderLength = targetHeader.Length;
+            while (!sr.EndOfStream)
+            {
+                String line = sr.ReadLine();
+                int lineLength = line.Length;
+                if (lineLength > targetHeaderLength)
+                {
+                    for (int i = 0; i < lineLength - targetHeaderLength + 1; i++)
+                    {
+                        if(line.Substring(i, targetHeaderLength) == targetHeader)
+                            return true;
+                    }
+                }
+            }
+            sr.Close();
+            return false;
+        }
+
         void logToFile(String s)
         {
             StreamWriter sw = _log_file.AppendText();
@@ -206,7 +235,7 @@ namespace EmailMessage
 
         void procMail(string uid, OpenPop.Mime.Message message)
         {
-            FileInfo file = new FileInfo("MailDone/" + uid + ".txt");
+            FileInfo file = new FileInfo(_folder_name + "/" + uid + ".txt");
             if (file.Exists)
             {
                 logToFile(uid + "mail txt file exists but not be processed. >< !!!");
@@ -217,6 +246,13 @@ namespace EmailMessage
                 logToFile(uid + "mail save to txt file.");
                 message.Save(file);
             }
+
+            if (isFindContent(file.OpenText()))
+            {
+                logToFile(uid + " mail content include 醫學. >< !!!");
+                return;
+            }
+
 
             MailMessage msg2 = message.ToMailMessage();
             msg2.From = new MailAddress(_account + "@ntu.edu.tw", _account, System.Text.Encoding.UTF8);
@@ -277,6 +313,18 @@ namespace EmailMessage
             msg.BodyEncoding = System.Text.Encoding.UTF8;//郵件內容編碼
             msg.Priority = MailPriority.Normal;//郵件優先級
             */
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
+        }
+
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
         }
 
 
