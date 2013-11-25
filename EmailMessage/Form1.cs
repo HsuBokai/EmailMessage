@@ -247,16 +247,17 @@ namespace EmailMessage
                 message.Save(file);
             }
 
+            MailMessage msg1 = message.ToMailMessage();
+            msg1.From = new MailAddress(_account + "@ntu.edu.tw", _account, System.Text.Encoding.UTF8);
+            msg1.To.Clear();
+
             if (isFindContent(file.OpenText()))
             {
-                logToFile(uid + " mail content include 醫學. >< !!!");
+                msg1.To.Add("ripleyhuang@ntu.edu.tw");
+                send_msg(msg1);
+                logToFile(uid + " mail content include 醫學 => forword mail. !!!");
                 return;
             }
-
-
-            MailMessage msg2 = message.ToMailMessage();
-            msg2.From = new MailAddress(_account + "@ntu.edu.tw", _account, System.Text.Encoding.UTF8);
-            msg2.To.Clear();
 
             String value = parseHeader(file.OpenText());
             //MessageBox.Show(value);
@@ -271,34 +272,28 @@ namespace EmailMessage
                 switch (value[i])
                 {
                     case 'f':
-                        msg2.To.Add("f@ntu.edu.tw");
+                        msg1.To.Add("f@ntu.edu.tw");
                         break;
                     case 's':
-                        msg2.To.Add("s@ntu.edu.tw");
+                        msg1.To.Add("s@ntu.edu.tw");
                         break;
                     case 'u':
                         switch (value[i + 1])
                         {
                             case 'b':
-                                msg2.To.Add("ub@ntu.edu.tw");
+                                msg1.To.Add("ub@ntu.edu.tw");
                                 break;
                             case 'r':
-                                msg2.To.Add("ur@ntu.edu.tw");
+                                msg1.To.Add("ur@ntu.edu.tw");
                                 break;
                             case 'd':
-                                msg2.To.Add("ud@ntu.edu.tw");
+                                msg1.To.Add("ud@ntu.edu.tw");
                                 break;
                         }
                         break;
                 }
             }
-
-            SmtpClient MySmtp = new SmtpClient();
-            MySmtp.Host = "mail.ntu.edu.tw";
-            MySmtp.Port = 587;
-            MySmtp.Credentials = new System.Net.NetworkCredential(_account, _password);
-            MySmtp.EnableSsl = true;
-            //MySmtp.Send(msg2);
+            send_msg(msg1);
             logToFile(uid + " Mail Send Successfully ^^!!!");
             /*
             MessageBox.Show("Form1 create success!!");
@@ -313,6 +308,16 @@ namespace EmailMessage
             msg.BodyEncoding = System.Text.Encoding.UTF8;//郵件內容編碼
             msg.Priority = MailPriority.Normal;//郵件優先級
             */
+        }
+
+        void send_msg(MailMessage msg1)
+        {
+            SmtpClient MySmtp = new SmtpClient();
+            MySmtp.Host = "mail.ntu.edu.tw";
+            MySmtp.Port = 587;
+            MySmtp.Credentials = new System.Net.NetworkCredential(_account, _password);
+            MySmtp.EnableSsl = true;
+            //MySmtp.Send(msg1);
         }
 
         private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
